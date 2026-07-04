@@ -1,0 +1,11 @@
+{
+  "name": "@synthex/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./types/index.ts",
+    "./types/agent.types": "./types/agent.types.ts",
+    "./types/research.types": "./types/research.types.ts",
+    "./types/queue.types": "./types/queue.types.ts"
+  }
+}

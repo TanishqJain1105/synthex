@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Catppuccin Latte (light) ─────────────────────────────────────────────── */
+:root {
+  --card: #ffffff;
+  --ring: #8839ef;
+  --input: #ccd0da;
+  --muted: #dce0e8;
+  --accent: #04a5e5;
+  --border: #bcc0cc;
+  --radius: 0.35rem;
+  --chart-1: #8839ef;
+  --chart-2: #04a5e5;
+  --chart-3: #40a02b;
+  --chart-4: #fe640b;
+  --chart-5: #dc8a78;
+  --popover: #ccd0da;
+  --primary: #8839ef;
+  --sidebar: #e6e9ef;
+  --font-mono: 'Fira Code', monospace;
+  --font-sans: 'Montserrat', sans-serif;
+  --secondary: #ccd0da;
+  --background: #eff1f5;
+  --font-serif: Georgia, serif;
+  --foreground: #4c4f69;
+  --destructive: #d20f39;
+  --shadow-blur: 6px;
+  --shadow-color: hsl(240 30% 25%);
+  --sidebar-ring: #8839ef;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.12;
+  --sidebar-accent: #04a5e5;
+  --sidebar-border: #bcc0cc;
+  --card-foreground: #4c4f69;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 4px;
+  --sidebar-primary: #8839ef;
+  --muted-foreground: #6c6f85;
+  --accent-foreground: #ffffff;
+  --popover-foreground: #4c4f69;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #4c4f69;
+  --secondary-foreground: #4c4f69;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-primary-foreground: #ffffff;
+
+  /* agent states */
+  --agent-done: #40a02b; /* Catppuccin green */
+  --agent-running: #8839ef; /* Catppuccin mauve */
+  --agent-waiting: #acb0be; /* Catppuccin overlay1 */
+  --agent-error: #d20f39; /* Catppuccin red */
+  --agent-done-bg: #40a02b18;
+  --agent-running-bg: #8839ef18;
+  --agent-error-bg: #d20f3918;
+
+  /* confidence score bar */
+  --conf-high: #40a02b; /* green — above 0.75 */
+  --conf-med: #fe640b; /* peach — 0.5 to 0.75 */
+  --conf-low: #d20f39; /* red — below 0.5 */
+
+  /* streaming text cursor */
+  --cursor-color: #8839ef;
+
+  /* citation badge */
+  --cite-bg: #8839ef18;
+  --cite-text: #8839ef;
+
+  color-scheme: light;
+}
+
+/* ── Catppuccin Mocha (dark) ──────────────────────────────────────────────── */
+.dark {
+  --card: #1e1e2e;
+  --ring: #cba6f7;
+  --input: #313244;
+  --muted: #292c3c;
+  --accent: #89dceb;
+  --border: #313244;
+  --chart-1: #cba6f7;
+  --chart-2: #89dceb;
+  --chart-3: #a6e3a1;
+  --chart-4: #fab387;
+  --chart-5: #f5e0dc;
+  --popover: #45475a;
+  --primary: #cba6f7;
+  --sidebar: #11111b;
+  --secondary: #585b70;
+  --background: #181825;
+  --foreground: #cdd6f4;
+  --destructive: #f38ba8;
+  --sidebar-ring: #cba6f7;
+  --sidebar-accent: #89dceb;
+  --sidebar-border: #45475a;
+  --card-foreground: #cdd6f4;
+  --sidebar-primary: #cba6f7;
+  --muted-foreground: #a6adc8;
+  --accent-foreground: #1e1e2e;
+  --popover-foreground: #cdd6f4;
+  --primary-foreground: #1e1e2e;
+  --sidebar-foreground: #cdd6f4;
+  --secondary-foreground: #cdd6f4;
+  --destructive-foreground: #1e1e2e;
+  --sidebar-accent-foreground: #1e1e2e;
+  --sidebar-primary-foreground: #1e1e2e;
+
+  --agent-done: #a6e3a1;
+  --agent-running: #cba6f7;
+  --agent-waiting: #6c7086;
+  --agent-error: #f38ba8;
+  --agent-done-bg: #a6e3a118;
+  --agent-running-bg: #cba6f718;
+  --agent-error-bg: #f38ba818;
+
+  --conf-high: #a6e3a1;
+  --conf-med: #fab387;
+  --conf-low: #f38ba8;
+
+  --cursor-color: #cba6f7;
+  --cite-bg: #cba6f718;
+  --cite-text: #cba6f7;
+
+  color-scheme: dark;
+}
+
+/*
+ * Tailwind v4 `@theme inline` bridge. This project builds on Tailwind v3, where
+ * these `--color-*` tokens are inert — the live wiring lives in tailwind.config.ts.
+ * Kept for a future v4 migration so the token surface is already defined.
+ */
+@theme inline {
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-radius: var(--radius);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-popover: var(--popover);
+  --color-primary: var(--primary);
+  --color-sidebar: var(--sidebar);
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: 'Fira Code', monospace;
+  }
+
+  /* Slim, unobtrusive scrollbars for the feed + report panels. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+}
+
+/* ── Report typography (manual markdown output; no typography plugin) ──────── */
+@layer components {
+  .report-prose > * + * {
+    margin-top: 0.9em;
+  }
+  .report-prose h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-top: 1.4em;
+  }
+  .report-prose h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-top: 1.3em;
+  }
+  .report-prose h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1.15em;
+  }
+  .report-prose h1,
+  .report-prose h2,
+  .report-prose h3 {
+    color: var(--foreground);
+  }
+  .report-prose h1:first-child,
+  .report-prose h2:first-child,
+  .report-prose h3:first-child {
+    margin-top: 0;
+  }
+  .report-prose ul {
+    list-style: disc;
+    padding-left: 1.4em;
+  }
+  .report-prose li + li {
+    margin-top: 0.35em;
+  }
+  .report-prose strong {
+    font-weight: 700;
+    color: var(--foreground);
+  }
+  .report-prose a {
+    color: var(--primary);
+  }
+  .report-prose code {
+    font-family: 'Fira Code', monospace;
+  }
+}

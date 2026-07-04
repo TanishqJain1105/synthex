@@ -1,0 +1,7 @@
+{
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"cd D:\\\\PROJECTS\\\\synthex\\\\src; npx tsc --noEmit 2>&1\",\"timeout\":60000,\"description\":\"TypeScript compile check on full src tree\"}",
+  "error": "Exit code 2\ntools/scrape-url.tool.ts(39,31): error TS2307: Cannot find module 'playwright' or its corresponding type declarations.\r\ntools/scrape-url.tool.ts(41,35): error TS2307: Cannot find module 'playwright' or its corresponding type declarations.\r\ntools/scrape-url.tool.ts(47,23): error TS2307: Cannot find module 'playwright' or its corresponding type declarations.",
+  "timestamp": "2026-07-03T17:33:37.492Z",
+  "retry_count": 1
+}

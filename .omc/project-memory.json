@@ -1,0 +1,444 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1783079205809,
+  "projectRoot": "D:\\PROJECTS\\synthex",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "cd \"D:/PROJECTS/synthex\"; echo \"=== backend (src) typecheck ===\"; node_modules/.bin/tsc -p src/tsconfig.json --noEmit 2>&1 | head -30; echo \"backend exit:${PIPESTATUS[0]}\"; echo; echo \"=== frontend (web) typecheck ===\"; node_modules/.bin/tsc -p web/tsconfig.json --noEmit 2>&1 | head -30; echo \"web exit:${PIPESTATUS[0]}\"",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {
+      "dev:api": "npm run dev --workspace=src",
+      "dev:web": "npm run dev --workspace=web",
+      "build": "npm run build --workspace=shared && npm run build --workspace=src && npm run build --workspace=web"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [
+      "src",
+      "web",
+      "shared"
+    ],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "shared": {
+      "path": "shared",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1783079205792,
+      "keyFiles": [
+        "package.json"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1783079205792,
+      "keyFiles": [
+        "index.ts",
+        "package.json",
+        "tsconfig.json"
+      ]
+    },
+    "web": {
+      "path": "web",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1783079205798,
+      "keyFiles": [
+        "index.html",
+        "package.json",
+        "postcss.config.ts",
+        "tailwind.config.ts",
+        "tsconfig.json"
+      ]
+    },
+    "shared\\types": {
+      "path": "shared\\types",
+      "purpose": "Type definitions",
+      "fileCount": 4,
+      "lastAccessed": 1783079205799,
+      "keyFiles": [
+        "agent.types.ts",
+        "index.ts",
+        "queue.types.ts"
+      ]
+    },
+    "src\\node_modules": {
+      "path": "src\\node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 0,
+      "lastAccessed": 1783079205799,
+      "keyFiles": []
+    },
+    "src\\routes": {
+      "path": "src\\routes",
+      "purpose": "Route handlers",
+      "fileCount": 3,
+      "lastAccessed": 1783079205799,
+      "keyFiles": [
+        "history.route.ts",
+        "research.route.ts",
+        "stream.route.ts"
+      ]
+    },
+    "src\\scripts": {
+      "path": "src\\scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 1,
+      "lastAccessed": 1783079205799,
+      "keyFiles": [
+        "test-phase1.ts"
+      ]
+    },
+    "web\\src": {
+      "path": "web\\src",
+      "purpose": "Source code",
+      "fileCount": 2,
+      "lastAccessed": 1783079205800,
+      "keyFiles": [
+        "index.css",
+        "main.tsx"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\agents\\orchestrator.agent.ts",
+      "accessCount": 7,
+      "lastAccessed": 1783119111831,
+      "type": "file"
+    },
+    {
+      "path": "src\\agents\\researcher.agent.ts",
+      "accessCount": 7,
+      "lastAccessed": 1783119122466,
+      "type": "file"
+    },
+    {
+      "path": "shared\\types\\research.types.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783115470785,
+      "type": "file"
+    },
+    {
+      "path": "src\\agents\\base.agent.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783115495033,
+      "type": "file"
+    },
+    {
+      "path": "src\\agents\\critic.agent.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783118968087,
+      "type": "file"
+    },
+    {
+      "path": "src\\agents\\synthesizer.agent.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783118969117,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\rag-retrieve.tool.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783102293171,
+      "type": "file"
+    },
+    {
+      "path": "src\\routes\\stream.route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783115472345,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\embed-chunk.tool.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783118784634,
+      "type": "file"
+    },
+    {
+      "path": "src\\memory\\scratchpad.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783118785347,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\score-source.tool.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783118967702,
+      "type": "file"
+    },
+    {
+      "path": "src\\agents\\planner.agent.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783118968598,
+      "type": "file"
+    },
+    {
+      "path": "web\\src\\hooks\\useAgentStream.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783119129920,
+      "type": "file"
+    },
+    {
+      "path": "src\\prompts\\critic.prompt.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783101713559,
+      "type": "file"
+    },
+    {
+      "path": "src\\prompts\\synthesizer.prompt.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783102320182,
+      "type": "file"
+    },
+    {
+      "path": "shared\\types\\agent.types.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783115470175,
+      "type": "file"
+    },
+    {
+      "path": "shared\\types\\queue.types.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783115471113,
+      "type": "file"
+    },
+    {
+      "path": "src\\routes\\research.route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783115472627,
+      "type": "file"
+    },
+    {
+      "path": "src\\routes\\history.route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783115473103,
+      "type": "file"
+    },
+    {
+      "path": "src\\db\\schema.sql",
+      "accessCount": 3,
+      "lastAccessed": 1783118784132,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\web-search.tool.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783118923401,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\scrape-url.tool.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783118967581,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\arxiv-search.tool.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783118967609,
+      "type": "file"
+    },
+    {
+      "path": "src\\prompts\\orchestrator.prompt.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783098894010,
+      "type": "file"
+    },
+    {
+      "path": "src\\prompts\\planner.prompt.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783099040955,
+      "type": "file"
+    },
+    {
+      "path": "src\\package.json",
+      "accessCount": 2,
+      "lastAccessed": 1783099643381,
+      "type": "file"
+    },
+    {
+      "path": "src\\prompts\\researcher.prompt.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783099954346,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 2,
+      "lastAccessed": 1783102122998,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 2,
+      "lastAccessed": 1783115465808,
+      "type": "file"
+    },
+    {
+      "path": "src\\memory\\message-bus.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783115495771,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1783115623459,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 2,
+      "lastAccessed": 1783118783250,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 2,
+      "lastAccessed": 1783118783625,
+      "type": "file"
+    },
+    {
+      "path": "src\\memory\\vector-store.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783118785136,
+      "type": "file"
+    },
+    {
+      "path": "src\\queue\\worker.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783118923921,
+      "type": "file"
+    },
+    {
+      "path": "src\\index.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783118924059,
+      "type": "file"
+    },
+    {
+      "path": "src\\db\\client.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783118969587,
+      "type": "file"
+    },
+    {
+      "path": "src\\queue\\research.queue.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783118969994,
+      "type": "file"
+    },
+    {
+      "path": "src\\queue\\job-types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783098075782,
+      "type": "file"
+    },
+    {
+      "path": "src\\tsconfig.json",
+      "accessCount": 1,
+      "lastAccessed": 1783098089663,
+      "type": "file"
+    },
+    {
+      "path": "shared\\package.json",
+      "accessCount": 1,
+      "lastAccessed": 1783098089906,
+      "type": "file"
+    },
+    {
+      "path": "src\\scripts\\test-phase1.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783098102139,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\tanis\\AppData\\Local\\Temp\\claude\\D--PROJECTS-synthex\\445caaf1-4a6d-46f6-a96b-02e9f71a7001\\tasks\\bz63ntooz.output",
+      "accessCount": 1,
+      "lastAccessed": 1783098293554,
+      "type": "file"
+    },
+    {
+      "path": "src\\scripts\\test-phase2.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783099090217,
+      "type": "file"
+    },
+    {
+      "path": "src\\scripts\\test-phase3.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783100008213,
+      "type": "file"
+    },
+    {
+      "path": "src\\scripts\\test-phase4.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783102042377,
+      "type": "file"
+    },
+    {
+      "path": "src\\tools\\generate-citations.tool.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783102305698,
+      "type": "file"
+    },
+    {
+      "path": "src\\scripts\\test-phase5.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783102421887,
+      "type": "file"
+    },
+    {
+      "path": "C:\\Users\\tanis\\AppData\\Local\\Temp\\claude\\D--PROJECTS-synthex\\445caaf1-4a6d-46f6-a96b-02e9f71a7001\\tasks\\bzq00c8mv.output",
+      "accessCount": 1,
+      "lastAccessed": 1783102665413,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 1,
+      "lastAccessed": 1783103168500,
+      "type": "directory"
+    }
+  ],
+  "userDirectives": []
+}

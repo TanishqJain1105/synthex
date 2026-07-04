@@ -1,0 +1,7 @@
+{
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"cd D:\\\\PROJECTS\\\\synthex\\nWrite-Host \\\"=== 1. Health check ===\\\"\\ncurl.exe -s http://localhost:3000/health\\nWrite-Host \\\"`n`n=== 2. SSE endpoint headers (curl -N, held open then timed out)...",
+  "error": "Exit code 3\n=== 1. Health check ===\n{\"status\":\"ok\"}\n\n=== 2. SSE endpoint headers (curl -N, held open then timed out) ===\nHTTP/1.1 200 OK\r\nX-Powered-By: Express\r\nAccess-Control-Allow-Origin: http://localhost:3000\r\nVary: Origin\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: keep-alive\r\nDate: Fri, 03 Jul 2026 18:17:02 GMT\r\n\n=== 3. POST a research query ===\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>SyntaxError: Unt...",
+  "timestamp": "2026-07-03T18:17:06.468Z",
+  "retry_count": 1
+}

@@ -1,0 +1,7 @@
+{
+  "tool_name": "PowerShell",
+  "tool_input_preview": "{\"command\":\"docker info 2>&1 | Select-Object -First 5\",\"description\":\"Check if Docker Desktop daemon is running yet\"}",
+  "error": "Exit code 255\nClient:\r\n Version:    29.5.3\r\n Context:    desktop-linux\r\n Debug Mode: false\r\n Plugins:",
+  "timestamp": "2026-07-03T11:44:38.648Z",
+  "retry_count": 1
+}
