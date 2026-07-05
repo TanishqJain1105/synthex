@@ -1,14 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk'
+import Groq from 'groq-sdk'
 import { AgentEvent, AgentRole } from '@synthex/shared/types/agent.types'
 import { messageBus } from '../memory/message-bus.js'
 
+// Groq exposes an OpenAI-compatible chat-completions API. One shared default
+// model for every agent, overridable via GROQ_MODEL. llama-3.3-70b-versatile is
+// a production Groq model with tool-use + streaming and a 128k context window.
+export const GROQ_MODEL = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
+
 export abstract class BaseAgent {
-  protected client: Anthropic
+  protected client: Groq
   protected role: AgentRole
 
   constructor(role: AgentRole) {
     this.role = role
-    this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    this.client = new Groq({ apiKey: process.env.GROQ_API_KEY })
   }
 
   protected emit(jobId: string, event: Omit<AgentEvent, 'jobId' | 'agentRole' | 'timestamp'>) {
@@ -21,64 +26,64 @@ export abstract class BaseAgent {
     messageBus.emit(`job:${jobId}`, fullEvent)
   }
 
-  // Agentic tool-use loop: call Claude → execute tool_use blocks → feed results back → repeat
-  // until stop_reason is 'end_turn'. Emits SSE events after every step.
+  // Agentic tool-use loop: call Groq → execute the model's tool_calls → feed
+  // results back → repeat until the model stops requesting tools. Emits SSE
+  // events after every step. Uses OpenAI-style function calling (Groq-compatible).
   protected async runWithTools(
     jobId: string,
     system: string,
     userMessage: string,
-    tools: Anthropic.Tool[],
+    tools: Groq.Chat.Completions.ChatCompletionTool[],
     toolHandlers: Record<string, (input: Record<string, unknown>) => Promise<unknown>>,
   ): Promise<string> {
-    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: userMessage }]
+    const messages: Groq.Chat.Completions.ChatCompletionMessageParam[] = [
+      { role: 'system', content: system },
+      { role: 'user', content: userMessage },
+    ]
 
     for (;;) {
-      const response = await this.client.messages.create({
-        model: 'claude-sonnet-4-6',
+      const response = await this.client.chat.completions.create({
+        model: GROQ_MODEL,
         max_tokens: 4096,
-        system,
         tools,
         messages,
       })
 
-      messages.push({ role: 'assistant', content: response.content })
+      const message = response.choices[0]?.message
+      const toolCalls = message?.tool_calls ?? []
 
-      if (response.stop_reason === 'end_turn') {
-        const text = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')
-        return text?.text ?? ''
+      // No tool calls → the model produced its final answer.
+      if (toolCalls.length === 0) {
+        return message?.content ?? ''
       }
 
-      if (response.stop_reason !== 'tool_use') break
+      // Record the assistant turn that requested the tools before answering them.
+      messages.push({ role: 'assistant', content: message?.content ?? '', tool_calls: toolCalls })
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = []
-
-      for (const block of response.content) {
-        if (block.type !== 'tool_use') continue
-
-        this.emit(jobId, { type: 'tool_call', payload: { tool: block.name, input: block.input } })
+      for (const call of toolCalls) {
+        const name = call.function.name
+        this.emit(jobId, { type: 'tool_call', payload: { tool: name, input: call.function.arguments } })
 
         let result: unknown
         try {
-          const handler = toolHandlers[block.name]
-          if (!handler) throw new Error(`No handler registered for tool: ${block.name}`)
-          result = await handler(block.input as Record<string, unknown>)
-          this.emit(jobId, { type: 'tool_result', payload: { tool: block.name, result } })
+          const handler = toolHandlers[name]
+          if (!handler) throw new Error(`No handler registered for tool: ${name}`)
+          // Groq returns tool arguments as a JSON string — parse before dispatch.
+          const args = call.function.arguments ? JSON.parse(call.function.arguments) : {}
+          result = await handler(args as Record<string, unknown>)
+          this.emit(jobId, { type: 'tool_result', payload: { tool: name, result } })
         } catch (err) {
           result = { error: (err as Error).message }
-          this.emit(jobId, { type: 'error', payload: { tool: block.name, error: (err as Error).message } })
+          this.emit(jobId, { type: 'error', payload: { tool: name, error: (err as Error).message } })
         }
 
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
+        messages.push({
+          role: 'tool',
+          tool_call_id: call.id,
           content: JSON.stringify(result),
         })
       }
-
-      messages.push({ role: 'user', content: toolResults })
     }
-
-    return ''
   }
 
   abstract run(jobId: string, input: unknown): Promise<unknown>

@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import './env.js'
 import express from 'express'
 import cors from 'cors'
 import { researchRouter } from './routes/research.route.js'
@@ -9,7 +9,9 @@ import './queue/worker.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
-app.use(cors({ origin: process.env.VITE_API_URL ?? 'http://localhost:5173' }))
+// CORS must allow the FRONTEND's origin (the Vite dev server / deployed web app),
+// not the API's own URL. WEB_ORIGIN defaults to the local Vite dev server.
+app.use(cors({ origin: process.env.WEB_ORIGIN ?? 'http://localhost:5173' }))
 app.use(express.json())
 
 app.use('/api/research', researchRouter)

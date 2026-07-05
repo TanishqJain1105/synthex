@@ -31,12 +31,15 @@ type ChunkInput = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-// Anthropic has no embeddings API; Voyage AI (voyage-large-2, 1536-dim) is the
-// vendor Anthropic recommends and what the schema's vector(1536) column expects.
+// Groq has no embeddings API, so embeddings stay on Voyage AI (voyage-large-2,
+// 1536-dim) — what the schema's vector(1536) column expects.
 // Batches all texts in one request (correct API usage — the endpoint takes an
 // array) and retries with exponential backoff on 429/5xx so free-tier rate
 // limits slow the pipeline instead of aborting it.
 async function getEmbeddings(texts: string[], attempt = 0): Promise<number[][]> {
+  // A hard timeout is essential: a stalled Voyage connection (common under
+  // concurrent load / rate limiting) would otherwise hang the researcher's job
+  // forever. On timeout the AbortError propagates and is caught by the caller.
   const res = await fetch('https://api.voyageai.com/v1/embeddings', {
     method: 'POST',
     headers: {
@@ -44,6 +47,7 @@ async function getEmbeddings(texts: string[], attempt = 0): Promise<number[][]> 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ model: 'voyage-large-2', input: texts }),
+    signal: AbortSignal.timeout(30_000),
   })
 
   if (res.status === 429 || res.status >= 500) {

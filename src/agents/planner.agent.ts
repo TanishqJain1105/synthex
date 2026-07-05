@@ -1,5 +1,5 @@
 import { Job } from 'bullmq'
-import { BaseAgent } from './base.agent.js'
+import { BaseAgent, GROQ_MODEL } from './base.agent.js'
 import { researchQueue } from '../queue/research.queue.js'
 import { plannerPrompt } from '../prompts/planner.prompt.js'
 import { QueryType } from '@synthex/shared/types/research.types'
@@ -36,17 +36,19 @@ export class PlannerAgent extends BaseAgent {
       ? `\n\nThis is a RE-QUERY round. The previous round scored below the confidence threshold. Target ONLY these gaps flagged by the Critic — do not repeat prior subtasks:\n${gaps.map((g, i) => `${i + 1}. ${g}`).join('\n')}`
       : ''
 
-    const msg = await this.client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const msg = await this.client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 1024,
-      system: plannerPrompt,
-      messages: [{
-        role: 'user',
-        content: `Query: "${query}"\nType: ${queryType}\nRound: ${round}${gapBlock}\n\nReturn a JSON array of up to ${MAX_RESEARCHER_AGENTS} subtask objects with fields: subtaskId (string), description (string), searchStrategy ("web"|"academic"|"news"|"domain").`,
-      }],
+      messages: [
+        { role: 'system', content: plannerPrompt },
+        {
+          role: 'user',
+          content: `Query: "${query}"\nType: ${queryType}\nRound: ${round}${gapBlock}\n\nReturn a JSON array of up to ${MAX_RESEARCHER_AGENTS} subtask objects with fields: subtaskId (string), description (string), searchStrategy ("web"|"academic"|"news"|"domain").`,
+        },
+      ],
     })
 
-    const raw = (msg.content.find((b) => b.type === 'text') as { text: string } | undefined)?.text ?? ''
+    const raw = msg.choices[0]?.message?.content ?? ''
     const jsonMatch = raw.match(/\[[\s\S]*\]/)
     if (!jsonMatch) throw new Error('Planner returned no valid JSON')
 

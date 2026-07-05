@@ -1,4 +1,4 @@
-import { BaseAgent } from './base.agent.js'
+import { BaseAgent, GROQ_MODEL } from './base.agent.js'
 import { scratchpad } from '../memory/scratchpad.js'
 import { scoreSource } from '../tools/score-source.tool.js'
 import { criticPrompt } from '../prompts/critic.prompt.js'
@@ -50,17 +50,19 @@ export class CriticAgent extends BaseAgent {
       `[${i + 1}] ${s.finding.content}\n    source: ${s.finding.sourceTitle} (${s.finding.sourceUrl})\n    authority: ${s.cred.domainAuthority.toFixed(2)}, date: ${s.cred.publicationDate ?? 'unknown'}, corroborating domains: ${s.cred.corroborationCount}`
     ).join('\n\n')
 
-    const msg = await this.client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const msg = await this.client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 1024,
-      system: criticPrompt,
-      messages: [{
-        role: 'user',
-        content: `Query type: ${input.queryType ?? 'exploratory'}\nResearch round: ${round}\nDistinct source domains: ${distinctDomains}\n\nFindings to evaluate:\n${evidence}`,
-      }],
+      messages: [
+        { role: 'system', content: criticPrompt },
+        {
+          role: 'user',
+          content: `Query type: ${input.queryType ?? 'exploratory'}\nResearch round: ${round}\nDistinct source domains: ${distinctDomains}\n\nFindings to evaluate:\n${evidence}`,
+        },
+      ],
     })
 
-    const raw = (msg.content.find((b) => b.type === 'text') as { text: string } | undefined)?.text ?? ''
+    const raw = msg.choices[0]?.message?.content ?? ''
     const parsed = this.parseReport(raw)
 
     const report: CriticReport = {

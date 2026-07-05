@@ -8,10 +8,10 @@ import { v4 as uuidv4 } from 'uuid'
 const ok = (label: string) => console.log(`  ✓ ${label}`)
 const warn = (label: string) => console.log(`  ⚠ ${label}`)
 const fail = (label: string, err: unknown) => { console.error(`  ✗ ${label}:`, err); process.exit(1) }
-const hasKey = (k?: string) => !!k && k !== 'placeholder'
+const hasKey = (k?: string) => !!k && !k.startsWith('placeholder')
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-// [3] runs regardless of keys; [1] needs Voyage; [4] needs Anthropic.
+// [3] runs regardless of keys; [1] needs Voyage; [4] needs Groq.
 async function testSseStreaming() {
   console.log('\n[3] SSE streaming path (real Express + HTTP client + messageBus)')
   const { streamRouter } = await import('../routes/stream.route.js')
@@ -149,9 +149,9 @@ async function testRagRetrieve() {
 
 async function testSynthesizerLive() {
   console.log('\n[4] Synthesizer — full RAG → streamed report → persisted (live)')
-  if (!hasKey(process.env.ANTHROPIC_API_KEY) || !hasKey(process.env.VOYAGE_API_KEY)) {
-    warn('ANTHROPIC_API_KEY / VOYAGE_API_KEY placeholder — skipping live synthesis')
-    console.log('  ℹ With a real Anthropic key: RAG → streamed cited report → reports table row with confidence + gaps')
+  if (!hasKey(process.env.GROQ_API_KEY) || !hasKey(process.env.VOYAGE_API_KEY)) {
+    warn('GROQ_API_KEY / VOYAGE_API_KEY placeholder — skipping live synthesis')
+    console.log('  ℹ With a real Groq key: RAG → streamed cited report → reports table row with confidence + gaps')
     return
   }
   // (Live synthesis path exercised via the server curl demo when keys are present.)

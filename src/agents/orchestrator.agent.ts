@@ -1,5 +1,5 @@
 import { Job, QueueEvents } from 'bullmq'
-import { BaseAgent } from './base.agent.js'
+import { BaseAgent, GROQ_MODEL } from './base.agent.js'
 import { PlannerAgent } from './planner.agent.js'
 import { CriticAgent } from './critic.agent.js'
 import { SynthesizerAgent } from './synthesizer.agent.js'
@@ -11,6 +11,10 @@ import pool from '../db/client.js'
 const MAX_REQUERY_ROUNDS = parseInt(process.env.MAX_REQUERY_ROUNDS ?? '3')
 const CONFIDENCE_THRESHOLD = parseFloat(process.env.CRITIC_CONFIDENCE_THRESHOLD ?? '0.7')
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
+// Hard cap on how long the orchestrator waits for any single researcher. A wedged
+// researcher (e.g. a stalled upstream API) must never hang the whole job — after
+// this it's treated as failed and the round proceeds with whatever findings exist.
+const RESEARCHER_TIMEOUT_MS = parseInt(process.env.RESEARCHER_TIMEOUT_MS ?? '120000')
 
 type Classification = {
   queryType: QueryType
@@ -128,7 +132,19 @@ export class OrchestratorAgent extends BaseAgent {
     if (jobs.length === 0) return
     this.emit(jobId, { type: 'thinking', payload: { message: `Waiting for ${jobs.length} researchers to complete…` } })
 
-    const results = await Promise.allSettled(jobs.map((j) => j.waitUntilFinished(queueEvents)))
+    // Race each researcher against a timeout so a single wedged job can't block
+    // the round forever — allSettled already tolerates a rejected/timed-out one.
+    const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([
+        p,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`researcher exceeded ${ms}ms`)), ms).unref?.()
+        ),
+      ])
+
+    const results = await Promise.allSettled(
+      jobs.map((j) => withTimeout(j.waitUntilFinished(queueEvents), RESEARCHER_TIMEOUT_MS))
+    )
     const failed = results.filter((r) => r.status === 'rejected').length
 
     this.emit(jobId, {
@@ -138,14 +154,16 @@ export class OrchestratorAgent extends BaseAgent {
   }
 
   private async classifyQuery(query: string): Promise<Classification> {
-    const msg = await this.client.messages.create({
-      model: 'claude-sonnet-4-6',
+    const msg = await this.client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 256,
-      system: orchestratorPrompt,
-      messages: [{ role: 'user', content: `Classify this research query:\n\n${query}` }],
+      messages: [
+        { role: 'system', content: orchestratorPrompt },
+        { role: 'user', content: `Classify this research query:\n\n${query}` },
+      ],
     })
 
-    const text = (msg.content.find((b) => b.type === 'text') as { text: string } | undefined)?.text.trim() ?? ''
+    const text = (msg.choices[0]?.message?.content ?? '').trim()
     const jsonMatch = text.match(/\{[\s\S]*\}/)
 
     if (jsonMatch) {

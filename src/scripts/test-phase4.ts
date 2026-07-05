@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 const ok = (label: string) => console.log(`  ✓ ${label}`)
 const warn = (label: string) => console.log(`  ⚠ ${label}`)
 const fail = (label: string, err: unknown) => { console.error(`  ✗ ${label}:`, err); process.exit(1) }
-const hasKey = (k?: string) => !!k && k !== 'placeholder'
+const hasKey = (k?: string) => !!k && !k.startsWith('placeholder')
 
 async function testScoreSource() {
   console.log('\n[1] score-source — objective credibility object')
@@ -85,7 +85,7 @@ async function testRequeryLoop() {
     return { planner, critic, synthesizer, state: () => ({ plannerCalls, gapsSeen, synthRan }) }
   }
 
-  // Stub classifyQuery so no live Anthropic call is needed.
+  // Stub classifyQuery so no live Groq call is needed.
   const runScenario = async (confidences: number[]) => {
     const fakes = makeFakes(confidences)
     const orch = new OrchestratorAgent({
@@ -133,11 +133,11 @@ async function testRequeryLoop() {
 }
 
 // Real Critic pass over seeded findings — exercises the adversarial prompt + gap
-// extraction against the live model. One Anthropic call.
+// extraction against the live model. One Groq call.
 async function testCriticLive() {
   console.log('\n[4] Critic — live adversarial pass over seeded findings')
-  if (!hasKey(process.env.ANTHROPIC_API_KEY)) {
-    warn('ANTHROPIC_API_KEY is a placeholder — skipping live Critic call')
+  if (!hasKey(process.env.GROQ_API_KEY)) {
+    warn('GROQ_API_KEY is a placeholder — skipping live Critic call')
     return
   }
 

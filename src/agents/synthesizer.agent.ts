@@ -1,5 +1,5 @@
-import { BaseAgent } from './base.agent.js'
-import { ragRetrieve } from '../tools/rag-retrieve.tool.js'
+import { BaseAgent, GROQ_MODEL } from './base.agent.js'
+import { ragRetrieve, Chunk } from '../tools/rag-retrieve.tool.js'
 import { generateCitations } from '../tools/generate-citations.tool.js'
 import { scratchpad } from '../memory/scratchpad.js'
 import { synthesizerPrompt } from '../prompts/synthesizer.prompt.js'
@@ -16,8 +16,24 @@ export class SynthesizerAgent extends BaseAgent {
     const { query } = input
 
     // 1. RAG retrieval — the Synthesizer only sees the most relevant chunks.
+    // If retrieval fails (e.g. the embedding provider is rate-limited/down), fall
+    // back to the raw scratchpad findings so the run still produces a report
+    // rather than crashing the whole job.
     this.emit(jobId, { type: 'thinking', payload: { message: 'Retrieving relevant chunks via RAG…' } })
-    const chunks = await ragRetrieve(jobId, query, 10)
+    let chunks: Chunk[]
+    try {
+      chunks = await ragRetrieve(jobId, query, 10)
+    } catch (err) {
+      this.emit(jobId, { type: 'error', payload: { tool: 'rag_retrieve', error: (err as Error).message } })
+      const findings = await scratchpad.getFindings(jobId)
+      chunks = findings.map((f) => ({
+        content: f.content,
+        sourceUrl: f.sourceUrl,
+        sourceTitle: f.sourceTitle,
+        credibilityScore: f.credibilityScore,
+        similarity: 0,
+      }))
+    }
     this.emit(jobId, { type: 'tool_result', payload: { tool: 'rag_retrieve', chunksRetrieved: chunks.length } })
 
     // 2. Pull the Critic's verdict so the report's confidence + gaps are real,
@@ -37,20 +53,23 @@ export class SynthesizerAgent extends BaseAgent {
       ? `\n\nThe Critic flagged these outstanding gaps — fold them into the Knowledge Gaps section:\n${criticGaps.map((g) => `- ${g}`).join('\n')}`
       : ''
 
-    const stream = await this.client.messages.stream({
-      model: 'claude-sonnet-4-6',
+    const stream = await this.client.chat.completions.create({
+      model: GROQ_MODEL,
       max_tokens: 4096,
-      system: synthesizerPrompt,
-      messages: [{
-        role: 'user',
-        content: `Research question: ${query}\n\nConfidence score to report: ${confidence.toFixed(2)}${gapsBlock}\n\nVerified findings (cite by their [n] tag):\n${context}`,
-      }],
+      stream: true,
+      messages: [
+        { role: 'system', content: synthesizerPrompt },
+        {
+          role: 'user',
+          content: `Research question: ${query}\n\nConfidence score to report: ${confidence.toFixed(2)}${gapsBlock}\n\nVerified findings (cite by their [n] tag):\n${context}`,
+        },
+      ],
     })
 
     let reportContent = ''
-    for await (const event of stream) {
-      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-        const chunk = event.delta.text
+    for await (const part of stream) {
+      const chunk = part.choices[0]?.delta?.content
+      if (chunk) {
         reportContent += chunk
         // Each token streams live to whoever is listening on /api/stream/:jobId.
         this.emit(jobId, { type: 'report_chunk', payload: { chunk } })

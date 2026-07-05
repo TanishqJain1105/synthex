@@ -11,9 +11,9 @@ const connection = { url: process.env.REDIS_URL ?? 'redis://localhost:6379' }
 async function testOrchestratorClassification() {
   console.log('\n[1] Orchestrator — query classification')
 
-  const hasKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'placeholder'
+  const hasKey = !!process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.startsWith('gsk_')
   if (!hasKey) {
-    console.log('  ⚠ ANTHROPIC_API_KEY is a placeholder — skipping live Claude call')
+    console.log('  ⚠ GROQ_API_KEY is a placeholder — skipping live Groq call')
     console.log('  ℹ Set a real key in .env to test classification')
     return
   }
@@ -37,9 +37,9 @@ async function testOrchestratorClassification() {
 async function testPlannerQueueing() {
   console.log('\n[2] Planner — query decomposition → Redis queue')
 
-  const hasKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'placeholder'
+  const hasKey = !!process.env.GROQ_API_KEY && process.env.GROQ_API_KEY.startsWith('gsk_')
   if (!hasKey) {
-    console.log('  ⚠ ANTHROPIC_API_KEY is a placeholder — testing queue mechanics only')
+    console.log('  ⚠ GROQ_API_KEY is a placeholder — testing queue mechanics only')
     await testQueueMechanicsOnly()
     return
   }

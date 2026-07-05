@@ -197,7 +197,7 @@ type AgentEvent = {
 | ---------------- | -------------------------------------------- |
 | Backend runtime  | Node.js 20 + TypeScript                      |
 | Web framework    | Express 5                                    |
-| AI               | Anthropic Claude API (claude-sonnet-4-6)     |
+| AI               | Groq API (llama-3.3-70b-versatile, OpenAI-compatible) |
 | Vector DB        | PostgreSQL 16 + pgvector extension           |
 | Task queue       | Redis 7 + BullMQ                             |
 | Web scraping     | Cheerio (fast) + Playwright (JS-heavy pages) |
@@ -217,8 +217,9 @@ type AgentEvent = {
 Copy `.env.example` to `.env` and fill in:
 
 ```bash
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-...
+# Groq (LLM inference — OpenAI-compatible chat completions)
+GROQ_API_KEY=gsk_...          # console.groq.com/keys
+GROQ_MODEL=llama-3.3-70b-versatile   # any Groq production chat model
 
 # Database
 DATABASE_URL=postgresql://synthex:synthex@localhost:5432/synthex
@@ -269,7 +270,7 @@ npm run dev:web        # runs on :5173
 ## Key design decisions
 
 **Why no LangChain or LlamaIndex?**
-Building the agent loop from scratch using the raw Anthropic API with tool use. This gives full control over agent behaviour and is significantly more impressive on a resume than wrapping a library. It also means you understand exactly what's happening at every step.
+Building the agent loop from scratch using the raw Groq API (OpenAI-compatible chat completions with tool use, via the official `groq-sdk`). This gives full control over agent behaviour and is significantly more impressive on a resume than wrapping a library. It also means you understand exactly what's happening at every step. Groq is a drop-in swap for any OpenAI-compatible provider — change `GROQ_MODEL` (and the base client) to retarget.
 
 **Why BullMQ for the task queue instead of just Promise.all?**
 Researcher agents need to be independently retryable, observable, and rate-limited per API. BullMQ gives you job retries, concurrency control, and a dashboard out of the box. It also means the system is genuinely distributed — workers could run on separate machines.
@@ -349,7 +350,7 @@ The Orchestrator catches queries it cannot classify and returns an `error` event
 The Researcher agent catches Serper errors, logs them, and continues with whatever results it has. The Critic will score the finding set low (likely triggering a re-query round), but if all rounds fail, the Synthesizer writes a low-confidence report rather than crashing. The error is surfaced in the agent feed as a tool_result error event.
 
 **Embedding model**
-Synthex uses Voyage AI (`voyage-large-2`, 1536-dim) for embeddings — not the Anthropic embeddings API (which does not exist). The pgvector schema column is `vector(1536)` to match. Do not change the embedding model without also running a migration to update all existing `research_chunks` rows.
+Synthex uses Voyage AI (`voyage-large-2`, 1536-dim) for embeddings — Groq does not offer an embeddings endpoint, so embeddings stay on Voyage. The pgvector schema column is `vector(1536)` to match. Do not change the embedding model without also running a migration to update all existing `research_chunks` rows.
 
 ---
 
