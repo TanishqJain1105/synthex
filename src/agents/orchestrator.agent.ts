@@ -15,6 +15,24 @@ const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379'
 // researcher (e.g. a stalled upstream API) must never hang the whole job — after
 // this it's treated as failed and the round proceeds with whatever findings exist.
 const RESEARCHER_TIMEOUT_MS = parseInt(process.env.RESEARCHER_TIMEOUT_MS ?? '120000')
+// How long to wait for the Redis-backed QueueEvents connection to become ready
+// before giving up. Without this bound, an unreachable Redis leaves ioredis
+// retrying its connection forever: the job sits at status 'running' and emits no
+// further SSE events (the "stuck job / 0-byte stream" failure). A bounded wait
+// converts that silent infinite hang into a fast, surfaced 'Redis unavailable'
+// error — job marked 'failed', fatal SSE event sent to the client.
+const REDIS_READY_TIMEOUT_MS = parseInt(process.env.REDIS_READY_TIMEOUT_MS ?? '10000')
+
+// Reject `p` if it hasn't settled within `ms`. The timer is unref'd so it never
+// keeps the process alive on its own.
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} exceeded ${ms}ms`)), ms).unref?.()
+    ),
+  ])
+}
 
 type Classification = {
   queryType: QueryType
@@ -52,8 +70,10 @@ export class OrchestratorAgent extends BaseAgent {
     // any failure — a planner that returns no JSON, a Claude/DB outage — is
     // caught here, recorded as 'failed', and surfaced to the client.
     try {
+      console.log(`[trace] orchestrator.run START job=${jobId}`)
       this.emit(jobId, { type: 'thinking', payload: { message: 'Classifying query…' } })
       const classification = await this.classifyQuery(query)
+      console.log(`[trace] orchestrator classified job=${jobId} type=${classification.queryType}`)
       this.emit(jobId, {
         type: 'thinking',
         payload: { message: `Query classified: ${classification.queryType} (${classification.estimatedComplexity} complexity)`, ...classification },
@@ -63,7 +83,19 @@ export class OrchestratorAgent extends BaseAgent {
 
       // QueueEvents lets us block on individual researcher jobs finishing.
       const queueEvents = new QueueEvents('research', { connection: { url: REDIS_URL } })
-      await queueEvents.waitUntilReady()
+      console.log(`[trace] orchestrator waiting for QueueEvents ready job=${jobId}`)
+      // Bounded so an unreachable Redis fails fast instead of hanging the job
+      // forever at status 'running' with a silent, 0-byte SSE stream.
+      try {
+        await withTimeout(queueEvents.waitUntilReady(), REDIS_READY_TIMEOUT_MS, 'Redis QueueEvents connection')
+      } catch (err) {
+        // Fire-and-forget: with Redis unreachable, close() itself blocks on the
+        // reconnecting socket, so awaiting it would swallow the timeout and leave
+        // the job wedged at 'running'. Detach it and surface the failure now.
+        void queueEvents.close().catch(() => {})
+        throw new Error(`Redis unavailable — cannot coordinate researchers: ${(err as Error).message}`)
+      }
+      console.log(`[trace] orchestrator QueueEvents ready job=${jobId}`)
 
       let gaps: string[] = []
 
@@ -134,16 +166,8 @@ export class OrchestratorAgent extends BaseAgent {
 
     // Race each researcher against a timeout so a single wedged job can't block
     // the round forever — allSettled already tolerates a rejected/timed-out one.
-    const withTimeout = <T>(p: Promise<T>, ms: number): Promise<T> =>
-      Promise.race([
-        p,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`researcher exceeded ${ms}ms`)), ms).unref?.()
-        ),
-      ])
-
     const results = await Promise.allSettled(
-      jobs.map((j) => withTimeout(j.waitUntilFinished(queueEvents), RESEARCHER_TIMEOUT_MS))
+      jobs.map((j) => withTimeout(j.waitUntilFinished(queueEvents), RESEARCHER_TIMEOUT_MS, 'researcher'))
     )
     const failed = results.filter((r) => r.status === 'rejected').length
 

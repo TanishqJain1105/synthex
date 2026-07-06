@@ -1,4 +1,5 @@
 import pool from '../db/client.js'
+import { voyageEmbed } from './voyage.js'
 
 // ~4 chars per token is a good enough approximation for English prose without
 // pulling in a tokenizer. 500-token chunks with 50-token overlap.
@@ -8,9 +9,10 @@ const OVERLAP_TOKENS = 50
 const CHUNK_SIZE = CHUNK_TOKENS * CHARS_PER_TOKEN // 2000 chars
 const OVERLAP_SIZE = OVERLAP_TOKENS * CHARS_PER_TOKEN // 200 chars
 
-// Default cap on chunks embedded per source. Bounds cost and keeps a single
-// batched request well under Voyage's free-tier token-per-minute limit.
-const DEFAULT_MAX_CHUNKS = 6
+// Default cap on chunks embedded per source. Each source is one batched Voyage
+// request regardless of chunk count, so this bounds per-request token size (kept
+// well under the free-tier TPM limit) rather than the request count.
+const DEFAULT_MAX_CHUNKS = 3
 
 type EmbedTextInput = {
   jobId: string
@@ -29,40 +31,12 @@ type ChunkInput = {
   credibilityScore?: number
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
 // Groq has no embeddings API, so embeddings stay on Voyage AI (voyage-large-2,
-// 1536-dim) — what the schema's vector(1536) column expects.
-// Batches all texts in one request (correct API usage — the endpoint takes an
-// array) and retries with exponential backoff on 429/5xx so free-tier rate
-// limits slow the pipeline instead of aborting it.
-async function getEmbeddings(texts: string[], attempt = 0): Promise<number[][]> {
-  // A hard timeout is essential: a stalled Voyage connection (common under
-  // concurrent load / rate limiting) would otherwise hang the researcher's job
-  // forever. On timeout the AbortError propagates and is caught by the caller.
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model: 'voyage-large-2', input: texts }),
-    signal: AbortSignal.timeout(30_000),
-  })
-
-  if (res.status === 429 || res.status >= 500) {
-    if (attempt >= 4) throw new Error(`Voyage API error: ${res.status} (retries exhausted)`)
-    const backoff = 5_000 * 2 ** attempt // 5s, 10s, 20s, 40s
-    await sleep(backoff)
-    return getEmbeddings(texts, attempt + 1)
-  }
-
-  if (!res.ok) throw new Error(`Voyage API error: ${res.status} ${await res.text()}`)
-
-  const data = await res.json() as { data: Array<{ embedding: number[]; index: number }> }
-  // Voyage returns items with an `index` field; sort so embeddings line up with inputs.
-  return data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)
-}
+// 1536-dim) — what the schema's vector(1536) column expects. All requests go
+// through the shared, globally rate-limited voyageEmbed() so the parallel
+// researchers don't burst past the free tier and get 429-throttled. See
+// ./voyage.ts for the rationale.
+const getEmbeddings = voyageEmbed
 
 // Split a block of text into ~500-token chunks with 50-token overlap so context
 // isn't lost at chunk boundaries during retrieval.

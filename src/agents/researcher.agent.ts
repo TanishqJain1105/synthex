@@ -8,8 +8,10 @@ import { scratchpad } from '../memory/scratchpad.js'
 import { JobPayload } from '@synthex/shared/types/queue.types'
 import { Finding } from '@synthex/shared/types/research.types'
 
-// How many of the top search results each researcher scrapes + embeds.
-const MAX_SOURCES = 3
+// How many of the top search results each researcher scrapes + embeds. Kept low
+// so N parallel researchers stay within the embedding provider's free-tier rate
+// limit — each source is one (rate-limited) Voyage embedding request.
+const MAX_SOURCES = 2
 
 export class ResearcherAgent extends BaseAgent {
   constructor() {
@@ -19,6 +21,7 @@ export class ResearcherAgent extends BaseAgent {
   async run(jobId: string, input: JobPayload): Promise<void> {
     const { subtaskId, query, searchStrategy } = input
 
+    console.log(`[trace] researcher START subtask=${subtaskId} strategy=${searchStrategy} job=${jobId}`)
     this.emit(jobId, { type: 'thinking', payload: { message: `Researching: ${query}`, subtaskId, searchStrategy } })
 
     // 1. Search — academic strategy hits ArXiv, everything else hits the web.
@@ -32,6 +35,14 @@ export class ResearcherAgent extends BaseAgent {
       if (searchStrategy === 'academic') {
         this.emit(jobId, { type: 'tool_call', payload: { tool: 'arxiv_search', query } })
         results = await arxivSearch(query)
+        // ArXiv only indexes CS/physics/math/quant-bio/stats preprints, so many
+        // subtasks (health, nutrition, humanities, current events) legitimately
+        // return nothing. Fall back to web search rather than yield an empty —
+        // and irrelevance-poisoned — finding set for the Critic to reject.
+        if (results.length === 0) {
+          this.emit(jobId, { type: 'tool_call', payload: { tool: 'web_search', query, note: 'arxiv empty — falling back to web' } })
+          results = await webSearch(query)
+        }
       } else {
         this.emit(jobId, { type: 'tool_call', payload: { tool: 'web_search', query } })
         results = await webSearch(query)

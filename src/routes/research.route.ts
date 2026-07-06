@@ -14,11 +14,13 @@ researchRouter.post('/', async (req: Request, res: Response) => {
 
   const jobId = uuidv4()
   await pool.query('INSERT INTO research_jobs (id, query) VALUES ($1, $2)', [jobId, query.trim()])
+  console.log(`[trace] job ${jobId} created in DB (pending) — query: ${query.trim()}`)
 
   const orchestrator = new OrchestratorAgent()
   orchestrator.run(jobId, { query: query.trim() }).catch((err) =>
     console.error(`[orchestrator] job ${jobId} failed:`, err)
   )
+  console.log(`[trace] orchestrator dispatched for job ${jobId}`)
 
   res.status(202).json({ jobId })
 })

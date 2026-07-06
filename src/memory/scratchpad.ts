@@ -2,7 +2,16 @@ import { createClient } from 'redis'
 import { Finding, CriticReport } from '@synthex/shared/types/research.types'
 
 const client = createClient({ url: process.env.REDIS_URL ?? 'redis://localhost:6379' })
-client.connect().catch(console.error)
+
+// node-redis emits 'error' on any socket problem (Redis restart, network blip,
+// unreachable host). An 'error' event with NO listener is fatal in Node — it is
+// re-thrown as an "Unhandled 'error' event" and crashes the whole process. That
+// took the backend down on every transient Redis drop, stranding in-flight jobs
+// at status 'running' with a dead (0-byte) SSE stream. Handling it here keeps the
+// process alive; node-redis then auto-reconnects (its default reconnectStrategy)
+// and the affected scratchpad calls reject/retry rather than killing the server.
+client.on('error', (err) => console.error('[scratchpad] redis client error:', (err as Error).message))
+client.connect().catch((err) => console.error('[scratchpad] initial redis connect failed:', err))
 
 const findingsKey = (jobId: string) => `scratchpad:${jobId}:findings`
 const criticKey = (jobId: string) => `scratchpad:${jobId}:critic`

@@ -55,6 +55,7 @@ export class PlannerAgent extends BaseAgent {
     const subtasks: Array<{ subtaskId: string; description: string; searchStrategy: JobPayload['searchStrategy'] }> =
       JSON.parse(jsonMatch[0])
 
+    console.log(`[trace] planner enqueuing ${subtasks.length} subtasks job=${jobId} round=${round}`)
     this.emit(jobId, { type: 'thinking', payload: { message: `Enqueuing ${subtasks.length} subtasks`, subtasks, round } })
 
     return Promise.all(

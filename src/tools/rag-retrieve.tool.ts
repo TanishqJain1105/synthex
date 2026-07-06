@@ -1,4 +1,5 @@
 import pool from '../db/client.js'
+import { voyageEmbedOne } from './voyage.js'
 
 export type Chunk = {
   content: string
@@ -8,34 +9,11 @@ export type Chunk = {
   similarity: number // cosine similarity to the query (1 = identical)
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-// Retries on 429/5xx with exponential backoff so a rate-limited embedding call
-// (Voyage's free tier is only 3 RPM) slows retrieval instead of aborting it.
-async function getQueryEmbedding(query: string, attempt = 0): Promise<number[]> {
-  const res = await fetch('https://api.voyageai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model: 'voyage-large-2', input: [query] }),
-    signal: AbortSignal.timeout(30_000),
-  })
-
-  if (res.status === 429 || res.status >= 500) {
-    if (attempt >= 4) throw new Error(`Voyage API error: ${res.status} (retries exhausted)`)
-    await sleep(5_000 * 2 ** attempt) // 5s, 10s, 20s, 40s
-    return getQueryEmbedding(query, attempt + 1)
-  }
-
-  if (!res.ok) throw new Error(`Voyage API error: ${res.status} ${await res.text()}`)
-  const data = await res.json() as { data: Array<{ embedding: number[] }> }
-  return data.data[0].embedding
-}
-
 export async function ragRetrieve(jobId: string, query: string, limit = 10): Promise<Chunk[]> {
-  const embedding = await getQueryEmbedding(query)
+  // The query embedding must be the SAME model/dimension as the stored chunks,
+  // and it goes through the same shared, rate-limited Voyage queue so it never
+  // competes with the researchers' embedding calls for the free-tier budget.
+  const embedding = await voyageEmbedOne(query)
 
   // `<=>` is pgvector's cosine-distance operator (ivfflat vector_cosine_ops index);
   // ordering ascending returns the most semantically similar chunks first.
