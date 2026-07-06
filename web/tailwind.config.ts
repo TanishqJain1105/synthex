@@ -66,9 +66,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Montserrat', 'sans-serif'],
-        mono: ['Fira Code', 'monospace'],
-        serif: ['Georgia', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        serif: ['Source Serif 4', 'serif'],
       },
       borderRadius: {
         DEFAULT: 'var(--radius)',
