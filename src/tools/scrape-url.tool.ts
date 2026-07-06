@@ -48,7 +48,10 @@ async function scrapeWithPlaywright(url: string): Promise<string | null> {
   try {
     browser = await chromium.launch({ headless: true })
     const page = await browser.newPage({ userAgent: 'Synthex-Research-Bot/1.0' })
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 20_000 })
+    // `domcontentloaded` (not `networkidle`) — we only need the rendered DOM text,
+    // and networkidle waits out every tracker/analytics socket, adding many seconds
+    // per scrape. Short timeout so a slow page can't stall the researcher.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 8_000 })
     const html = await page.content()
     return extractText(html)
   } catch {
