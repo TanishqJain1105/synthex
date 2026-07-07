@@ -1,0 +1,21 @@
+# Keep the build context small and reproducible. node_modules is reinstalled from
+# the lockfile inside the image; dist is rebuilt. Never ship local env/state.
+**/node_modules
+dist
+# The API image never builds or serves the frontend. Exclude the whole web/ tree,
+# but keep its package.json so `npm ci` can still resolve the workspace graph.
+web/
+!web/package.json
+.git
+.gitignore
+.omc
+.env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
+docker-compose.yml
+DEPLOY.md
+README.md
+.vscode
+.idea

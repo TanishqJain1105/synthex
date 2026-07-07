@@ -26,15 +26,19 @@ services:
     ipAllowList: []              # empty = reachable only from Render services
 
   # Express API + in-process researcher worker.
+  # Runs on the Docker runtime so the image ships headless Chromium (from the
+  # Playwright base image) for the scrape_url JS-heavy fallback. Build/start come
+  # from the Dockerfile (multi-stage build + `node dist/src/index.js`), so no
+  # buildCommand/startCommand here.
   - type: web
     name: synthex-api
-    runtime: node
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free                  # free SLEEPS after ~15 min idle (kills in-flight jobs/SSE).
                                 # Use `starter` for an always-on backend.
     region: oregon
     numInstances: 1             # keep at 1 — see note at top of file
-    buildCommand: npm install && npm run build --workspace=shared && npm run build --workspace=src
-    startCommand: node dist/src/index.js
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

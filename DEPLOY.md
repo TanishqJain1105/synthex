@@ -7,6 +7,30 @@ Do the steps **in this order** — the two platforms reference each other's URLs
 
 ---
 
+## 0. SECURITY — rotate keys before you deploy (do this first)
+
+> **Rotate all three API keys before the first production deploy.** An earlier
+> `.env` was committed to git history (commits `fb9f82e` and `1e06ee5`) exposing
+> the **Serper** and **Voyage** keys. Even though `.env` is no longer tracked, the
+> secrets remain reachable in the history of this repo and must be treated as
+> compromised. The Groq key was never committed, but rotate it too as a precaution
+> since local `.env` values are handled during development.
+
+Rotate each from its dashboard, then paste the **new** values into Render (step 1.3):
+
+- **Groq** — https://console.groq.com/keys → revoke old, create new `GROQ_API_KEY`.
+- **Serper** — https://serper.dev/api-key → regenerate `SERPER_API_KEY` (old value `489b7…` is burned).
+- **Voyage** — https://dashboard.voyageai.com/ → rotate `VOYAGE_API_KEY` (old value `pa-ITMT…` is burned).
+
+Never paste real keys into `.env.example`, `render.yaml`, or any tracked file — they
+belong only in the Render dashboard (`sync: false`) and Vercel env settings.
+
+If you want the leaked values gone from git history entirely (not just rotated),
+scrub them with `git filter-repo` or BFG and force-push — but **rotating the keys is
+the actual fix**; history scrubbing is cosmetic once the old keys are dead.
+
+---
+
 ## 1. Backend → Render (do this first)
 
 1. Push this repo to GitHub (already at `github.com/TanishqJain1105/synthex`).
@@ -66,8 +90,11 @@ Save → Render redeploys → CORS is now locked to your frontend origin.
 
 ## Playwright note
 
-The `scrape_url` tool falls back to headless Chromium for JS-heavy pages. Render's
-native Node runtime lacks the system libs to launch Chromium, so that fallback will
-**degrade gracefully to Cheerio** (see `src/tools/scrape-url.tool.ts`) — static pages
-scrape fine; heavily client-rendered pages return less text. To enable full Playwright,
-deploy the API via a Docker runtime with `npx playwright install --with-deps chromium`.
+The `scrape_url` tool falls back to headless Chromium for JS-heavy pages. `render.yaml`
+now deploys `synthex-api` on the **Docker runtime** (`runtime: docker`, built from
+[`Dockerfile`](./Dockerfile)), which is based on the official Playwright image and
+ships Chromium plus all its system libs — so the JS-heavy fallback works in production.
+
+If you ever revert the API to Render's native Node runtime, Chromium can't launch there
+and `scrape_url` **degrades gracefully to Cheerio** (see `src/tools/scrape-url.tool.ts`):
+static pages scrape fine, heavily client-rendered pages return less text.
